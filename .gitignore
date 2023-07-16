@@ -1,4 +1,5 @@
 node_modules
+voices
 .env
 config.json
 test.js

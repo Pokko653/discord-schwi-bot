@@ -1,5 +1,5 @@
 const { REST, Routes } = require('discord.js');
-const { clientId, guildId, token } = require('./config.json');
+const { clientId, guildIds, token } = require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -33,14 +33,14 @@ const rest = new REST().setToken(token);
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-		// The put method is used to fully refresh all commands in the guild with the current set
-		const data = await rest.put(
-			Routes.applicationGuildCommands(clientId, guildId), // 특정 길드에 명령어 등록
-            // Routes.applicationCommands(clientId), // 모든 길드에 명령어 등록
-			{ body: commands },
-		);
-
-		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		for (const guildId of guildIds) {
+			const data = await rest.put(
+			  Routes.applicationGuildCommands(clientId, guildId),
+			  { body: commands },
+			);
+			console.log(`Successfully reloaded ${data.length} application (/) commands for guild ${guildId}.`);
+		}
+		
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!
 		console.error(error);

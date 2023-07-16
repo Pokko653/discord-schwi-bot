@@ -3,11 +3,9 @@ const { EmbedBuilder, SlashCommandBuilder, ChatInputCommandInteraction } = requi
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('avatar')
-		.setNameLocalization('ko', '프사')
 		.setDescription('사용자의 프로필 사진을 가지고 온다.')
         .addUserOption(option => 
             option.setName('user')
-			.setNameLocalization('ko', '사용자')
             .setDescription('프로필 사진을 가져올 사용자')
             .setRequired(true)
 		),
