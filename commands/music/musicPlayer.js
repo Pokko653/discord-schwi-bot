@@ -1,10 +1,9 @@
-const { VoiceConnectionStatus, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioResource } = require('@discordjs/voice');
+const { AudioPlayerStatus, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioResource } = require('@discordjs/voice');
+const { TextBasedChannel } = require('discord.js');
 const playdl = require('play-dl');
-const music = require('./music');
-const { GuildChannel, TextBasedChannel } = require('discord.js');
 
 class MusicPlayer {
-    constructor(channel) {
+    constructor() {
         this.array = [];
         this.playing = false;
         this.player = createAudioPlayer({
