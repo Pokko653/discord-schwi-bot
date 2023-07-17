@@ -36,7 +36,6 @@ for (const folder of commandFolders) {
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, c => {
 	console.log(`Ready! Logged in as ${c.user.tag}`);
-	c.user.setUsername('슈비 도라');
 });
 
 // 클라이언트 토큰으로 디스코드 로그인
