@@ -108,7 +108,7 @@ module.exports = {
                 if (!connection) {
                     const channel = interaction.member.voice.channel;
                     if (!channel) {
-                        await interaction.reply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
+                        await interaction.editreply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
                         return;
                     }
 
@@ -127,9 +127,9 @@ module.exports = {
 
                 // Retrieve Audio URL
                 const targetURL = interaction.options.getString('url');
-                await musicPlayer.enqueue(targetURL);
+                await musicPlayer.enqueue(targetURL, interaction.member.user);
                 const enqueued = musicPlayer.lastItem();
-                await interaction.editReply(`「성공」: 큐의 ${musicPlayer.count()}번 항목에 \`${enqueued.title} (${enqueued.duration})\`(을)를 추가했다.`);
+                await interaction.editReply(`「성공」: 큐의 ${musicPlayer.count()}번 항목에 \`${enqueued.videoDetail.title} (${enqueued.videoDetail.durationRaw})\`(을)를 추가했다.`);
 
                 if (!musicPlayer.playing) {
                     await musicPlayer.playMusic();
@@ -146,7 +146,7 @@ module.exports = {
 
             let message = '「정보」: 현재 큐에 있는 노래들이다.\n';
             for (let i in musicPlayer.array) {
-                message += `#${Number(i)+1}: \`${musicPlayer.array[i].title} (${musicPlayer.array[i].duration})\`\n`;
+                message += `#${Number(i)+1}: \`${musicPlayer.array[i].videoDetail.title} (${musicPlayer.array[i].videoDetail.durationRaw})\` by \`${musicPlayer.array[i].requestBy.username}\`\n`;
             }
 
             await interaction.reply({ content: message.trim(), ephemeral: true });
@@ -156,7 +156,7 @@ module.exports = {
 
             try {
                 const removed = musicPlayer.remove(idx-1);
-                await interaction.reply(`「성공」: \`${removed.title} (${removed.duration})\`를 삭제했다.`);
+                await interaction.reply(`「성공」: \`${removed.videoDetail.title} (${removed.videoDetail.durationRaw})\`를 삭제했다.`);
             } catch (error) {
                 await interaction.reply({content: '「에러」: 없는 인덱스.', ephemeral: true });
             }

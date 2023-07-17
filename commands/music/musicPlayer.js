@@ -1,5 +1,5 @@
 const { AudioPlayerStatus, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioResource } = require('@discordjs/voice');
-const { TextBasedChannel } = require('discord.js');
+const { TextBasedChannel, EmbedBuilder, User } = require('discord.js');
 const playdl = require('play-dl');
 
 class MusicPlayer {
@@ -40,14 +40,14 @@ class MusicPlayer {
     }
 
     /**
-     * @returns {{resource: AudioResource, title: String, duration: String, thunbnailURL: String}} playing (or about to play) music
+     * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} playing (or about to play) music
      */
     curItem() {
         return this.array[0];
     }
 
     /**
-     * @returns {{resource: AudioResource, title: String, duration: String, thunbnailURL: String}} Most recently uploaded music
+     * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} Most recently uploaded music
      */
     lastItem() {
         return this.array[this.array.length-1];
@@ -56,8 +56,9 @@ class MusicPlayer {
     /**
      * @description Enqueue audio resource with YouTube url
      * @param {String} url YouTube url to enqueue
+     * @param {User} user user who requested
      */
-    async enqueue(url) {
+    async enqueue(url, user) {
         const info = await playdl.video_info(url, { language: 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6' });
         const stream = await playdl.stream_from_info(info);
 
@@ -67,9 +68,8 @@ class MusicPlayer {
 
         this.array.push({
             resource: resource,
-            title: info.video_details.title,
-            duration: info.video_details.durationRaw,
-            thunbnailURL: info.video_details.thumbnails[info.video_details.thumbnails.length - 1].url
+            requestBy: user,
+            videoDetail: info.video_details
         });
     }
 
@@ -83,7 +83,7 @@ class MusicPlayer {
     /**
      * @description Delete the specific music by index
      * @param {Number} idx Index that want to delete
-     * @returns {{resource: AudioResource, title: String, duration: String, thunbnailURL: String}} Deleted music info
+     * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} Deleted music info
      */
     remove(idx) {
         if (idx < 0 || idx >= this.array.length) throw Error('IndexError: Invalid index');
@@ -98,13 +98,25 @@ class MusicPlayer {
 
     /**
      * @description Play first music in the queue with player
-     * @return {{resource: AudioResource, title: String, duration: String, thunbnailURL: String}} Played music
+     * @return {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} Played music
      */
     async playMusic() {
-        const resource = this.curItem().resource;
+        const target = this.curItem();
+
+        const resource = target.resource;
         this.player.play(resource);
 
-        await this.channel.send(`「정보」: 현재 재생중: \`${this.curItem().title} (${this.curItem().duration})\``);
+        const embed = new EmbedBuilder()
+            .setAuthor({ name: target.videoDetail.channel.name, iconURL: target.videoDetail.channel.iconURL() })
+            .setTitle(target.videoDetail.title)
+            .setURL(target.videoDetail.url)
+            .setThumbnail(target.videoDetail.thumbnails[target.videoDetail.thumbnails.length-1].url)
+            .addFields([
+                { name: '\u200b', value: `**길이**\n${target.videoDetail.durationRaw}`, inline: true },
+                { name: '\u200b', value: `**신청자**\n${target.requestBy.username}`, inline: true }
+            ]);
+
+        await this.channel.send({ content: '현재 재생중인 노래랍니다~', embeds: [embed] });
     }
 
     /**
