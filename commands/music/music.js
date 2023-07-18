@@ -112,16 +112,7 @@ module.exports = {
             }
 
             try {
-                const connection = joinVoiceChannel({
-                    channelId: channel.id,
-                    guildId: channel.guild.id,
-                    adapterCreator: channel.guild.voiceAdapterCreator
-                });
-
-                connection.on('stateChange', (oldState, newState) => {
-                    console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
-                });
-
+                const connection = generateConnection(channel);
                 connection.subscribe(musicPlayer.player);
 
                 await interaction.reply(`「성공」: ${channel.name}에 접속했다.`);
@@ -138,41 +129,31 @@ module.exports = {
             let message = '「정보」: 현재 큐에 있는 노래들이다.\n';
             for (let i in musicPlayer.array) {
                 message += `#${Number(i)+1}: \`${musicPlayer.array[i].videoDetail.title} (${musicPlayer.array[i].videoDetail.durationRaw})\` by \`${musicPlayer.array[i].requestBy.username}\``;
-                message += (i === 0 && musicPlayer.isLooping)? '[반복중]\n': '\n';
+                message += (i === "0" && musicPlayer.isLooping)? ' [반복중]\n': '\n';
             }
 
             await interaction.reply({ content: message.trim(), ephemeral: true });
 
         } else if (subcommand === 'play') {
+            // Since retrieving audio from YouTube takes long time, it need to defer reply
+            await interaction.deferReply();
+
             try {
-                // Since retrieving audio from YouTube takes long time, it need to defer reply
-                await interaction.deferReply();
-
-                let connection = getVoiceConnection(interaction.guildId);
-                // Create Voice Connection to join voice channel
+                // Construct connection
+                const channel = interaction.member.voice.channel;
+                const connection = generateConnection(channel);
                 if (!connection) {
-                    const channel = interaction.member.voice.channel;
-                    if (!channel) {
-                        await interaction.editReply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
-                        return;
-                    }
-
-                    connection = joinVoiceChannel({
-                        channelId: channel.id,
-                        guildId: channel.guild.id,
-                        adapterCreator: channel.guild.voiceAdapterCreator
-                    });
+                    await interaction.editReply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
+                    return;
                 }
-
-                connection.on('stateChange', (oldState, newState) => {
-                    console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
-                });
 
                 connection.subscribe(musicPlayer.player);
 
-                // Retrieve Audio URL
+                // Enqueue music
                 const targetURL = interaction.options.getString('url');
-                await musicPlayer.enqueue(targetURL, interaction.member.user);
+                const isSuccess = await musicPlayer.enqueue(targetURL, interaction.member.user);
+                if(!isSuccess) throw Error('Enqueue failed.');
+
                 const enqueued = musicPlayer.lastItem();
                 await interaction.editReply(`「성공」: 큐의 ${musicPlayer.count()}번 항목에 \`${enqueued.videoDetail.title} (${enqueued.videoDetail.durationRaw})\`(을)를 추가했다.`);
 
@@ -181,6 +162,7 @@ module.exports = {
                 }
             } catch (error) {
                 console.error(error);
+                await interaction.editReply({content: '「에러」: URL이 잘못됨.', ephemeral: true });
             }
         } else if (subcommand === 'skip') {
             const idx = interaction.options.getNumber('index') ?? 1;
@@ -209,5 +191,36 @@ module.exports = {
             connection.destroy();
 			await interaction.reply('「정보」: 모든 음악을 큐에서 삭제하고 채널을 나갔다.');
 		}
+
+        function generateConnection(channel) {
+            let connection = getVoiceConnection(channel.guild.id);
+            
+            if (!connection && !!channel) {
+                connection = joinVoiceChannel({
+                    channelId: channel.id,
+                    guildId: channel.guild.id,
+                    adapterCreator: channel.guild.voiceAdapterCreator
+                });
+
+                connection.on('stateChange', (oldState, newState) => {
+                    console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+                });
+    
+                connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+                    try {
+                        await Promise.race([
+                            entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+                            entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+                        ]);
+                        // Seems to be reconnecting to a new channel - ignore disconnect
+                    } catch (error) {
+                        // Seems to be a real disconnect which SHOULDN'T be recovered from - destroy connection
+                        connection.destroy();
+                    }
+                });
+            } 
+
+            return connection;
+        }
 	},
 };

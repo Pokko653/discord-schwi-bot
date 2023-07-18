@@ -76,20 +76,28 @@ class MusicPlayer {
      * @description Enqueue audio resource with YouTube url
      * @param {String} url YouTube url to enqueue
      * @param {User} user user who requested
+     * @returns True if the music is normally enqueued
      */
     async enqueue(url, user) {
-        const info = await playdl.video_info(url, { language: 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6' });
-        const stream = await playdl.stream_from_info(info);
+        try {
+            const info = await playdl.video_info(url, { language: 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6' });
+            const stream = await playdl.stream_from_info(info);
 
-        const resource = createAudioResource(stream.stream, {
-            inputType: stream.type
-        });
+            const resource = createAudioResource(stream.stream, {
+                inputType: stream.type
+            });
 
-        this.array.push({
-            resource: resource,
-            requestBy: user,
-            videoDetail: info.video_details
-        });
+            this.array.push({
+                resource: resource,
+                requestBy: user,
+                videoDetail: info.video_details
+            });
+
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }   
     }
 
     /**
@@ -106,7 +114,7 @@ class MusicPlayer {
      * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} Deleted music info
      */
     remove(idx) {
-        if (idx < 0 || idx >= this.array.length) throw Error('IndexError: Invalid index');
+        if (idx < 0 || idx >= this.array.length) throw RangeError('Invalid index');
 
         if (idx === 0) {
             this.player.stop();
