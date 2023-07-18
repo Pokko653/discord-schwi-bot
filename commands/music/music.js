@@ -11,48 +11,79 @@ let musicPlayers = new Map(); // <guildId, MusicPlayer>
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('music')
-		.setDescription('음악 재생 기능을 이용할 수 있다.')
+        .setNameLocalization('ko', '음악')
+		.setDescription('Control music bot')
+        .setDescriptionLocalization('ko', '음악 재생 기능을 이용할 수 있다.')
         .addSubcommand(subcommand => 
 			subcommand
             .setName('join')
-            .setDescription('지정된 음성 채널에 접속. 기본값: 사용자의 음성 채널')
+            .setNameLocalization('ko', '접속')
+            .setDescription('Join the voice channel. Default: Channel where the user is')
+            .setDescriptionLocalization('ko', '지정된 음성 채널에 접속. 기본값: 사용자의 음성 채널')
             .addChannelOption(option => 
                 option
                 .setName('channel')
-                .setDescription('봇이 접속할 음성 채널')
+                .setNameLocalization('ko', '채널')
+                .setDescription('Voice channel the bot will join')
+                .setDescriptionLocalization('ko', '봇이 접속할 음성 채널')
                 .addChannelTypes(ChannelType.GuildVoice)
             )
 		)
         .addSubcommand(subcommand => 
 			subcommand
             .setName('list')
-            .setDescription('현재 큐 표시.')
+            .setNameLocalization('ko', '목록')
+            .setDescription('Display the current queue')
+            .setDescriptionLocalization('ko', '현재 큐 표시.')
 		)
 		.addSubcommand(subcommand => 
 			subcommand
             .setName('play')
-            .setDescription('큐에 음악을 넣고 재생.')
+            .setNameLocalization('ko', '재생')
+            .setDescription('Enqueue the music form YouTube and play it')
+            .setDescriptionLocalization('ko', '큐에 음악을 넣고 재생.')
             .addStringOption(option =>
                 option
                 .setName('url')
-                .setDescription('음악을 재생할 YouTube URL')
+                .setDescription('YouTube URL that will be played')
+                .setDescriptionLocalization('ko', '음악을 재생할 YouTube URL')
                 .setRequired(true)
             )
 		)
         .addSubcommand(subcommand => 
 			subcommand
             .setName('skip')
-            .setDescription('큐에 있는 음악을 제거. 기본값: 현재 재생중인 음악')
+            .setNameLocalization('ko', '스킵')
+            .setDescription('Delete music from the queue. Default: Currently playing music')
+            .setDescriptionLocalization('ko', '큐에 있는 음악을 제거. 기본값: 현재 재생중인 음악')
             .addNumberOption(option => 
                 option
                 .setName('index')
-                .setDescription('삭제할 음악의 인덱스')
+                .setNameLocalization('ko', '번호')
+                .setDescription('Index that will be deleted')
+                .setDescriptionLocalization('ko', '삭제할 음악의 인덱스')
             )
 		)
+        .addSubcommand(subcommand => 
+            subcommand
+            .setName('loop')
+            .setNameLocalization('ko', '반복')
+            .setDescription('Toggle the loop option')
+            .setDescriptionLocalization('ko', '음악 반복을 켜거나 끔.')
+            .addBooleanOption(option =>
+                option
+                .setName('boolean')
+                .setNameLocalization('ko', '설정값')
+                .setDescription('Boolean value expressing whether loop is on')
+                .setDescriptionLocalization('ko', '반복 여부를 나타내는 불리언 값')
+            )
+        )
 		.addSubcommand(subcommand =>
 			subcommand
             .setName('quit')
-            .setDescription('큐를 비우고 채널을 떠남.')
+            .setNameLocalization('ko', '종료')
+            .setDescription('Clear the queue and leave the channel')
+            .setDescriptionLocalization('ko', '큐를 비우고 채널을 떠남.')
 		),
 
     /**
@@ -98,6 +129,20 @@ module.exports = {
                 console.error(error);
             }
 
+        } else if (subcommand === 'list') {
+            if (musicPlayer.isEmpty()) {
+                await interaction.reply({ content: '「에러」: 큐가 비어있다.', ephemeral: true });
+                return;
+            }
+
+            let message = '「정보」: 현재 큐에 있는 노래들이다.\n';
+            for (let i in musicPlayer.array) {
+                message += `#${Number(i)+1}: \`${musicPlayer.array[i].videoDetail.title} (${musicPlayer.array[i].videoDetail.durationRaw})\` by \`${musicPlayer.array[i].requestBy.username}\``;
+                message += (i === 0 && musicPlayer.isLooping)? '[반복중]\n': '\n';
+            }
+
+            await interaction.reply({ content: message.trim(), ephemeral: true });
+
         } else if (subcommand === 'play') {
             try {
                 // Since retrieving audio from YouTube takes long time, it need to defer reply
@@ -108,7 +153,7 @@ module.exports = {
                 if (!connection) {
                     const channel = interaction.member.voice.channel;
                     if (!channel) {
-                        await interaction.editreply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
+                        await interaction.editReply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
                         return;
                     }
 
@@ -131,26 +176,12 @@ module.exports = {
                 const enqueued = musicPlayer.lastItem();
                 await interaction.editReply(`「성공」: 큐의 ${musicPlayer.count()}번 항목에 \`${enqueued.videoDetail.title} (${enqueued.videoDetail.durationRaw})\`(을)를 추가했다.`);
 
-                if (!musicPlayer.playing) {
+                if (!musicPlayer.isPlaying) {
                     await musicPlayer.playMusic();
                 }
             } catch (error) {
                 console.error(error);
             }
-
-        } else if (subcommand === 'list') {
-            if (musicPlayer.isEmpty()) {
-                await interaction.reply({ content: '「에러」: 큐가 비어있다.', ephemeral: true });
-                return;
-            }
-
-            let message = '「정보」: 현재 큐에 있는 노래들이다.\n';
-            for (let i in musicPlayer.array) {
-                message += `#${Number(i)+1}: \`${musicPlayer.array[i].videoDetail.title} (${musicPlayer.array[i].videoDetail.durationRaw})\` by \`${musicPlayer.array[i].requestBy.username}\`\n`;
-            }
-
-            await interaction.reply({ content: message.trim(), ephemeral: true });
-
         } else if (subcommand === 'skip') {
             const idx = interaction.options.getNumber('index') ?? 1;
 
@@ -160,6 +191,12 @@ module.exports = {
             } catch (error) {
                 await interaction.reply({content: '「에러」: 없는 인덱스.', ephemeral: true });
             }
+
+        } else if (subcommand === 'loop') {
+            const bool = interaction.options.getBoolean('boolean') ?? !musicPlayer.isLooping;
+            musicPlayer.setIsLooping(bool);
+
+            await interaction.reply(`「정보」: 이제 반복 설정이 \`${bool}\`(으)로 변경되었다.`);
             
 		} else if (subcommand === 'quit') {
             const connection = getVoiceConnection(interaction.guildId);

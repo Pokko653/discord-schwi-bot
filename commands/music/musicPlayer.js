@@ -5,7 +5,8 @@ const playdl = require('play-dl');
 class MusicPlayer {
     constructor() {
         this.array = [];
-        this.playing = false;
+        this.isPlaying = false;
+        this.isLooping = false;
         this.player = createAudioPlayer({
             behaviors: {
                 noSubscriber: NoSubscriberBehavior.Pause
@@ -14,18 +15,33 @@ class MusicPlayer {
 
         this.player.on('stateChange', (oldState, newState) => { // for debug
             console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
-            this.playing = (newState.status === 'playing');
+            this.isPlaying = (newState.status === 'playing');
         });
 
-        this.player.on(AudioPlayerStatus.Idle, () => {
-            this.dequeue();
+        this.player.on(AudioPlayerStatus.Idle, async () => {
+            if (this.isLooping) {
+                let loopingMusic = this.dequeue();
+
+                // Update AudioResource
+                const stream = await playdl.stream(loopingMusic.videoDetail.url);
+                loopingMusic.resource = createAudioResource(stream.stream, {
+                    inputType: stream.type
+                });
+
+                this.array.splice(0, 0, loopingMusic);
+            } else {
+                this.dequeue();
+            }
+
             if (!this.isEmpty()) this.playMusic();
+            else this.channel.send('「완료」: 모든 음악을 재생하였다.');
         });
 
         this.channel = null;
     }
 
     /**
+     * @description True if the queue is empty or false if the queue has any music
      * @returns {Boolean} true if the queue is empty
      */
     isEmpty() {
@@ -33,6 +49,7 @@ class MusicPlayer {
     }
 
     /**
+     * @description Return the number of musics in the queue
      * @returns {Number} Length of the queue
      */
     count() {
@@ -40,6 +57,7 @@ class MusicPlayer {
     }
 
     /**
+     * @description Return the music that playing (or will be playing)
      * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} playing (or about to play) music
      */
     curItem() {
@@ -47,6 +65,7 @@ class MusicPlayer {
     }
 
     /**
+     * @description Return the music that recently added
      * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} Most recently uploaded music
      */
     lastItem() {
@@ -75,9 +94,10 @@ class MusicPlayer {
 
     /**
      * @description Dequeue the first (played) music 
+     * @returns {{resource: AudioResource, requestBy: User, videoDetail: playdl.YouTubeVideo}} Dequeued music info
      */
     dequeue() {
-        this.array.shift();
+        return this.array.shift();
     }
 
     /**
@@ -110,13 +130,14 @@ class MusicPlayer {
             .setAuthor({ name: target.videoDetail.channel.name, iconURL: target.videoDetail.channel.iconURL() })
             .setTitle(target.videoDetail.title)
             .setURL(target.videoDetail.url)
+            .setDescription(this.isLooping? '(반복중)': '\u200b')
             .setThumbnail(target.videoDetail.thumbnails[target.videoDetail.thumbnails.length-1].url)
             .addFields([
                 { name: '\u200b', value: `**길이**\n${target.videoDetail.durationRaw}`, inline: true },
                 { name: '\u200b', value: `**신청자**\n${target.requestBy.username}`, inline: true }
             ]);
 
-        await this.channel.send({ content: '현재 재생중인 노래랍니다~', embeds: [embed] });
+        await this.channel.send({ content: '「정보」: 현재 재생중인 음악 정보:', embeds: [embed] });
     }
 
     /**
@@ -128,11 +149,19 @@ class MusicPlayer {
     }
 
     /**
-     * @param {TextBasedChannel} channel Text channel that the last command appeared
      * @description Set the property of channel
+     * @param {TextBasedChannel} channel Text channel that the last command appeared
      */
     setCommandChannel(channel) {
         this.channel = channel;
+    }
+
+    /**
+     * @description Set the boolean of looping
+     * @param {Boolean} bool Boolean that will be set to this object
+     */
+    setIsLooping(bool) {
+        this.isLooping = bool;
     }
 }
 
