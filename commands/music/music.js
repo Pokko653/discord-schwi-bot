@@ -102,7 +102,7 @@ module.exports = {
          * @type {MusicPlayer}
          */
         let musicPlayer = musicPlayers.get(guildID);
-        musicPlayer.setCommandChannel(interaction.channel)// For auto play message, MusicPlayer saves chatting channel ID that command appear
+        musicPlayer.setCommandChannel(interaction.channel) // For auto play message, MusicPlayer saves chatting channel ID that command appear
 
         if (subcommand === 'join') {
             const channel = interaction.options.getChannel('channel') ?? interaction.member.voice.channel;
@@ -140,8 +140,8 @@ module.exports = {
 
             try {
                 // Construct connection
-                const channel = interaction.member.voice.channel;
-                const connection = generateConnection(channel);
+                const channel = interaction.member.voice.channel, guildID = interaction.guildId; // 음성 채널에 없을 때는 VoiceState를 불러올 수 없으므로, guildID도 같이 전달하도록 함.
+                const connection = generateConnection(channel, guildID);
                 if (!connection) {
                     await interaction.editReply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
                     return;
@@ -192,8 +192,8 @@ module.exports = {
 			await interaction.reply('「정보」: 모든 음악을 큐에서 삭제하고 채널을 나갔다.');
 		}
 
-        function generateConnection(channel) {
-            let connection = getVoiceConnection(channel.guild.id);
+        function generateConnection(channel, guildID) {
+            let connection = getVoiceConnection(guildID);
             
             if (!connection && !!channel) {
                 connection = joinVoiceChannel({
