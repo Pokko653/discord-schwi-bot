@@ -3,4 +3,6 @@ voices
 .env
 config.json
 config_test.json
+test
 test.js
+tts
