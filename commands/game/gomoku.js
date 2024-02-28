@@ -376,8 +376,8 @@ const Game = {
             await Bot.reply(interaction, 
                 "게임을 시작합니다!\n\n" +
                 "< 플레이어 목록 >\n" +
-                "흑 : " + gamePlayerList[0] + "님\n" + 
-                "백 : " + gamePlayerList[1] + "님"
+                "흑: `" + gamePlayerList[0] + "`\n" + 
+                "백: `" + gamePlayerList[1] + "`"
             );
 
             const optNum = [], optLatin = [], ASCII_A = 64;
@@ -467,11 +467,12 @@ const Game = {
             });
         
         } else if (subcommand == "quit") { if (roomCheck) { if (managerCheck) { if (gamePower) {
-            Bot.replyRoom("게임이 종료됩니다.");
+            await interaction.reply('게임을 종료합니다.');
+            messageObject.delete();
             Game.off();
             } else printMessage(3); } else printMessage(4); } else printMessage(1);
         } else if (subcommand == "restart") { if (roomCheck) { if (managerCheck) { if (gamePower) {
-            Bot.replyRoom("현재 인원으로 게임을 재시작합니다.");
+            await interaction.reply("현재 인원으로 게임을 재시작합니다.");
             Game.restart();
 
         } else printMessage(3); } else printMessage(4); } else printMessage(1); }
