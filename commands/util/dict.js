@@ -65,7 +65,7 @@ module.exports = {
 
         async function fetchDictData(word) {
             const agent = new https.Agent({ rejectUnauthorized: false });
-            const apiUrl = `https://opendict.korean.go.kr/api/search?key=C9441CC3591F4762F0EF5CFBD22F24DC&q=${word}&req_type=json&num=100&advanced=y&method=exact`;
+            const apiUrl = `https://opendict.korean.go.kr/api/search?key=${process.env.DICT_TOKEN}&q=${word}&req_type=json&num=100&advanced=y&method=exact`;
 
             try {
                 const jsonData = await axios.get(apiUrl, { httpsAgent: agent });
