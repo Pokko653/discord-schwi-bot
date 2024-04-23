@@ -7,7 +7,9 @@ module.exports = {
     // data(property): 디스코드 상에 보여질 메타데이터, execute(method): 커멘드 실행 시 이벤트 핸들러로부터 실행될 함수를 담은 메서드 
 	data: new SlashCommandBuilder()
 		.setName('ping')
-		.setDescription('봇의 핑 측정'),
+		.setDescription('Show ping of the bot')
+		.setNameLocalization('ko', '핑')
+		.setDescriptionLocalization('ko', '봇의 핑을 보여준다.'),
 
 	/**
 	 * @param {ChatInputCommandInteraction} interaction 

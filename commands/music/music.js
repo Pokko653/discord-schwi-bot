@@ -13,13 +13,13 @@ module.exports = {
 		.setName('music')
         .setNameLocalization('ko', '음악')
 		.setDescription('Control music bot')
-        .setDescriptionLocalization('ko', '음악 재생 기능을 이용할 수 있다.')
+        .setDescriptionLocalization('ko', '음악 재생 모듈을 이용할 수 있다.')
         .addSubcommand(subcommand => 
 			subcommand
             .setName('join')
             .setNameLocalization('ko', '접속')
             .setDescription('Join the voice channel. Default: Channel where the user is')
-            .setDescriptionLocalization('ko', '지정된 음성 채널에 접속. 기본값: 사용자의 음성 채널')
+            .setDescriptionLocalization('ko', '슈비가 지정된 음성 채널에 접속한다. 기본값: 사용자의 현재 음성 채널')
             .addChannelOption(option => 
                 option
                 .setName('channel')
@@ -34,14 +34,14 @@ module.exports = {
             .setName('list')
             .setNameLocalization('ko', '목록')
             .setDescription('Display the current queue')
-            .setDescriptionLocalization('ko', '현재 큐 표시.')
+            .setDescriptionLocalization('ko', '현재 대기열을 보여준다.')
 		)
 		.addSubcommand(subcommand => 
 			subcommand
             .setName('play')
             .setNameLocalization('ko', '재생')
-            .setDescription('Enqueue the music form YouTube and play it')
-            .setDescriptionLocalization('ko', '큐에 음악을 넣고 재생.')
+            .setDescription('Enqueue the music with YouTube URL and play it')
+            .setDescriptionLocalization('ko', '대기열에 음악을 넣고 재생한다.')
             .addStringOption(option =>
                 option
                 .setName('url')
@@ -55,13 +55,13 @@ module.exports = {
             .setName('skip')
             .setNameLocalization('ko', '스킵')
             .setDescription('Delete music from the queue. Default: Currently playing music')
-            .setDescriptionLocalization('ko', '큐에 있는 음악을 제거. 기본값: 현재 재생중인 음악')
+            .setDescriptionLocalization('ko', '대기열에 있는 음악을 제거한다. 기본값: 현재 재생중인 음악')
             .addNumberOption(option => 
                 option
                 .setName('index')
                 .setNameLocalization('ko', '번호')
                 .setDescription('Index that will be deleted')
-                .setDescriptionLocalization('ko', '삭제할 음악의 인덱스')
+                .setDescriptionLocalization('ko', '삭제할 음악의 번호')
             )
 		)
         .addSubcommand(subcommand => 
@@ -69,7 +69,7 @@ module.exports = {
             .setName('loop')
             .setNameLocalization('ko', '반복')
             .setDescription('Toggle the loop option')
-            .setDescriptionLocalization('ko', '음악 반복을 켜거나 끔.')
+            .setDescriptionLocalization('ko', '음악을 반복한다.')
             .addBooleanOption(option =>
                 option
                 .setName('boolean')
@@ -83,7 +83,7 @@ module.exports = {
             .setName('quit')
             .setNameLocalization('ko', '종료')
             .setDescription('Clear the queue and leave the channel')
-            .setDescriptionLocalization('ko', '큐를 비우고 채널을 떠남.')
+            .setDescriptionLocalization('ko', '대기열를 모두 비우고 채널 접속을 끊는다.')
 		),
 
     /**
