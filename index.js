@@ -32,39 +32,18 @@ for (const folder of commandFolders) {
 	}
 }
 
-// 클라이언트가 준비되면 실행 (처음 한 번)
-// We use 'c' for the event parameter to keep it separate from the already defined 'client'
-client.once(Events.ClientReady, c => {
-	console.log(`Ready! Logged in as ${c.user.tag}`);
-});
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+
+for (const file of eventFiles) {
+	const filePath = path.join(eventsPath, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
+	} else {
+		client.on(event.name, (...args) => event.execute(...args));
+	}
+}
 
 // 클라이언트 토큰으로 디스코드 로그인
 client.login(token);
-
-// 모든 메시지에 반응
-// client.on(Events.MessageCreate, async msg => {
-// 	console.log(msg.content);
-// });
-
-// 슬래시(/) 커맨드는 interaction임 -> interaction이 생성되었을 때 반응하는 이벤트 리스너 생성
-client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand()) return; // 슬래시 커맨드가 아니면 무시
-    
-    // Collection에서 호출한 커맨드 이름으로 module을 찾음
-    const command = interaction.client.commands.get(interaction.commandName); 
-    if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
-    }
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(error);
-        if (interaction.replied || interaction.deferred) { // interaction이 응답되거나 지연 예약된(deferred) 경우 -> followUp으로 오류 표시
-			await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-		} else {
-			await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-		}
-    }
-});
