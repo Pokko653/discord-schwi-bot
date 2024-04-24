@@ -1,8 +1,8 @@
 node_modules
-voices
 .env
 config.json
 config_test.json
+bot_setting.json
 test
 test.js
 tts

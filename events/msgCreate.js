@@ -1,10 +1,13 @@
 const { Events, EmbedBuilder } = require('discord.js');
+const Settings = require('../bot_setting.json');
 
 // 모든 메시지에 반응: MessageCreate
 module.exports = {
 	name: Events.MessageCreate,
 	once: false,
 	async execute (msg) {
+        if (!Settings[msg.guildId].EmojiLarge) return null;
+
 		const channel = msg.channel;
         const contents = msg.content.trim();
 
