@@ -30,21 +30,26 @@ module.exports = {
 	 * @param {ChatInputCommandInteraction} interaction 
 	 */
 	async execute(interaction) {
-		const faces = interaction.options.getInteger('faces') ?? 6;
-        const n = interaction.options.getInteger('number') ?? 1;
+        try {
+            const faces = interaction.options.getInteger('faces') ?? 6;
+            const n = interaction.options.getInteger('number') ?? 1;
 
-        let res = '';
-        if (n === 1) {
-            res += `\`${Math.ceil(Math.random() * faces)}\``;
-        } else {
-            const rndArr = Array.from({ length: n }, () => Math.ceil(Math.random() * faces));
-            const sum = rndArr.reduce(( acc, x ) => acc + x, 0);
+            let res = '';
+            if (n === 1) {
+                res += `\`${Math.ceil(Math.random() * faces)}\``;
+            } else {
+                const rndArr = Array.from({ length: n }, () => Math.ceil(Math.random() * faces));
+                const sum = rndArr.reduce(( acc, x ) => acc + x, 0);
 
-            const displayArr = (rndArr.length > 100)? JSON.stringify(rndArr.slice(0, 100)).replace(/,/g, ', ').replace(']', ', ...]'): JSON.stringify(rndArr);
-            const displaySum = (sum > Number.MAX_SAFE_INTEGER)? sum.toExponential(): sum;
-            res += `\`${displayArr}\` → \`${displaySum}\``;
+                const displayArr = (rndArr.length > 100)? JSON.stringify(rndArr.slice(0, 100)).replace(/,/g, ', ').replace(']', ', ...]'): JSON.stringify(rndArr);
+                const displaySum = (sum > Number.MAX_SAFE_INTEGER)? sum.toExponential(): sum;
+                res += `\`${displayArr}\` → \`${displaySum}\``;
+            }
+
+            await interaction.reply(`「성공」: \`${n}d${faces}\` → ${res}`);
+        } catch (e) {
+            console.log(e)
+            await interaction.reply({content: '「에러」: 주사위가 책상 밑으로 굴러가버렸다... 다시 시도 부탁한다.', ephemeral: true });
         }
-
-        await interaction.reply(`「성공」: \`${n}d${faces}\` → ${res}`);
 	},
 };
