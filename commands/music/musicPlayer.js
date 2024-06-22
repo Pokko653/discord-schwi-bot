@@ -1,6 +1,7 @@
 const { AudioPlayerStatus, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioResource } = require('@discordjs/voice');
 const { TextBasedChannel, EmbedBuilder, User } = require('discord.js');
 const playdl = require('play-dl');
+const ytdl = require('ytdl-core');
 
 class MusicPlayer {
     constructor() {
@@ -23,11 +24,13 @@ class MusicPlayer {
                 let loopingMusic = this.dequeue();
 
                 // Update AudioResource
-                const stream = await playdl.stream(loopingMusic.videoDetail.url);
-                loopingMusic.resource = createAudioResource(stream.stream, {
-                    inputType: stream.type
+                const stream = ytdl(loopingMusic.videoDetail.url, {
+                    filter: "audioonly",
+                    quality: 'highestaudio',
+                    highWaterMark: 1 << 25
                 });
-
+    
+                loopingMusic.resource = createAudioResource(stream);
                 this.array.splice(0, 0, loopingMusic);
             } else {
                 this.dequeue();
@@ -81,11 +84,13 @@ class MusicPlayer {
     async enqueue(url, user) {
         try {
             const info = await playdl.video_info(url, { language: 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6' });
-            const stream = await playdl.stream_from_info(info);
-
-            const resource = createAudioResource(stream.stream, {
-                inputType: stream.type
+            const stream = ytdl(url, {
+                filter: "audioonly",
+                quality: 'highestaudio',
+                highWaterMark: 1 << 25
             });
+
+            const resource = createAudioResource(stream);
 
             this.array.push({
                 resource: resource,
@@ -132,6 +137,7 @@ class MusicPlayer {
         const target = this.curItem();
 
         const resource = target.resource;
+        this.player.play(resource);
         this.player.play(resource);
 
         const embed = new EmbedBuilder()
