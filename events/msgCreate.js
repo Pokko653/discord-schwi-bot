@@ -17,7 +17,7 @@ module.exports = {
             const emojiURL = matchRes? `https://cdn.discordapp.com/emojis/${matchRes[2]}.png`: `https://cdn.discordapp.com/emojis/${matchGifRes[2]}.gif`;
             const embed = new EmbedBuilder()
                 .setColor(msg.member.roles.color?.hexColor ?? '#000000')
-                .setAuthor({ name: msg.author.displayName, iconURL: msg.author.avatarURL()})
+                .setAuthor({ name: msg.member.displayName, iconURL: msg.member.displayAvatarURL()})
                 .setImage(emojiURL);
 
             await msg.delete();
