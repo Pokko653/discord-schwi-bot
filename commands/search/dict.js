@@ -23,6 +23,8 @@ module.exports = {
 	 * @param {ChatInputCommandInteraction} interaction 
 	 */
 	async execute(interaction) {
+        interaction.deferReply();
+
         // Component function
         const toUpperNum = (n) => ["⁰","¹","²","³","⁴","⁵","⁶","⁷","⁸","⁹"][Number(n)];
         const makeDictData2Field = (x) => {
@@ -36,12 +38,12 @@ module.exports = {
         }
 
 		const target = interaction.options.getString('word');
-        const data = await fetchDictData(target);
+        const data = await searchDictData(target);
         if (data === false) {
-            await interaction.reply({ content: '「에러」: 사전에 접근하는 데 실패했다.', ephemeral: true });
+            await interaction.editReply({ content: '「에러」: 사전에 접근하는 데 실패했다.', ephemeral: true });
             return;
         } else if (!!data == false) {
-            await interaction.reply({ content: '「에러」: 검색 결과가 없다.', ephemeral: true });
+            await interaction.editReply({ content: '「에러」: 검색 결과가 없다.', ephemeral: true });
             return;
         }
 
@@ -64,6 +66,24 @@ module.exports = {
         }
         
         res.sort((a, b) => a.num - b.num);
+
+        // API 오류로 중복된 단어가 나오면 단어 정보 조회로 수정
+        for (let i=0; i<res.length; i++) {
+            if (Number(res[i].num) != i+1) {
+                fixedData = await fetchDictData(target, i+1);
+
+                res[i] = {
+                    "word": res[i].word,
+                    "num": String(i+1).padStart(3, '0'),
+                    "pumsa": fixedData.senseInfo.pos,
+                    "desc": fixedData.senseInfo.definition,
+                    "syntax": fixedData.senseInfo?.grammar_info? fixedData.senseInfo?.grammar_info[0]: '',
+                    "realm": fixedData.senseInfo?.cat_info? fixedData.senseInfo?.cat_info[0]: '',
+                    "origin": res[i].origin
+                };
+            }
+        }
+
         const fs = res.map(makeDictData2Field);
         const fields = fs.slice(0, 25);
 
@@ -72,15 +92,27 @@ module.exports = {
             .addFields(fields)
             .setFooter({ text: 'powered by 우리말샘(opendict.korean.go.kr)' });
 
-        await interaction.reply({ content: `「정보」: \`${target}\`의 검색 결과이다.`, embeds: [embed] });
+        await interaction.editReply({ content: `「정보」: \`${target}\`의 검색 결과이다.`, embeds: [embed] });
 
-        async function fetchDictData(word) {
+        async function searchDictData(word) {
             const agent = new https.Agent({ rejectUnauthorized: false });
             const apiUrl = `https://opendict.korean.go.kr/api/search?key=${process.env.DICT_TOKEN}&q=${word}&target_type=search&req_type=json&part=word&sort=dict&start=1&num=25&method=exact`;
 
             try {
                 const jsonData = await axios.get(apiUrl, { httpsAgent: agent });
-                console.log(JSON.stringify(jsonData.data.channel.item))
+                return jsonData.data.channel.item;
+            } catch (e) {
+                console.error('Error fetching data:', e);
+                return false;
+            }
+        }
+
+        async function fetchDictData(word, num) {
+            const agent = new https.Agent({ rejectUnauthorized: false });
+            const apiUrl = `https://opendict.korean.go.kr/api/view?key=${process.env.DICT_TOKEN}&target_type=view&req_type=json&method=word_info&q=${word}${num.toString().padStart(3, '0')}`;
+
+            try {
+                const jsonData = await axios.get(apiUrl, { httpsAgent: agent });
                 return jsonData.data.channel.item;
             } catch (e) {
                 console.error('Error fetching data:', e);
