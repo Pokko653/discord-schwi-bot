@@ -1,7 +1,7 @@
 const { AudioPlayerStatus, createAudioPlayer, createAudioResource, NoSubscriberBehavior, AudioResource } = require('@discordjs/voice');
 const { TextBasedChannel, EmbedBuilder, User } = require('discord.js');
 const playdl = require('play-dl');
-const ytdl = require('ytdl-core');
+const ytdl = require('@distube/ytdl-core');
 
 class MusicPlayer {
     constructor() {

@@ -1,12 +1,12 @@
-const { ChannelType, ChatInputCommandInteraction, VoiceChannel } = require('discord.js');
+const { ChannelType, ChatInputCommandInteraction } = require('discord.js');
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { VoiceConnectionStatus, AudioPlayerStatus, joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, NoSubscriberBehavior } = require('@discordjs/voice');
+const { VoiceConnectionStatus, joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
 
 // Requirement for queue system
 const MusicPlayer = require('./musicPlayer');
 
 // Manage connection and MusicPlayer by guildID
-let musicPlayers = new Map(); // <guildId, MusicPlayer>
+let musicPlayers = new Map(); // <guildId(String), MusicPlayer>
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -98,6 +98,7 @@ module.exports = {
             console.log('New musicplayer pair was created');
             musicPlayers.set(guildID, new MusicPlayer());
         }
+
         /**
          * @type {MusicPlayer}
          */
@@ -112,7 +113,7 @@ module.exports = {
             }
 
             try {
-                const connection = generateConnection(channel);
+                const connection = this.generateConnection(channel);
                 connection.subscribe(musicPlayer.player);
 
                 await interaction.reply(`「성공」: ${channel.name}에 접속했다.`);
@@ -140,8 +141,8 @@ module.exports = {
 
             try {
                 // Construct connection
-                const channel = interaction.member.voice.channel, guildID = interaction.guildId; // 음성 채널에 없을 때는 VoiceState를 불러올 수 없으므로, guildID도 같이 전달하도록 함.
-                const connection = generateConnection(channel, guildID);
+                const channel = interaction.member.voice.channel; // 음성 채널에 없을 때는 VoiceState를 불러올 수 없으므로, guildID도 같이 전달하도록 함.
+                const connection = this.generateConnection(channel, guildID);
                 if (!connection) {
                     await interaction.editReply({ content: '「에러」: 먼저 음성 채널에 접속하여야 하거나, \'/music join\'을 이용해 봇을 접속시켜야 한다.', ephemeral: true });
                     return;
@@ -191,36 +192,35 @@ module.exports = {
             connection.destroy();
 			await interaction.reply('「정보」: 모든 음악을 큐에서 삭제하고 채널을 나갔다.');
 		}
-
-        function generateConnection(channel, guildID) {
-            let connection = getVoiceConnection(guildID);
-            
-            if (!connection && !!channel) {
-                connection = joinVoiceChannel({
-                    channelId: channel.id,
-                    guildId: channel.guild.id,
-                    adapterCreator: channel.guild.voiceAdapterCreator
-                });
-
-                connection.on('stateChange', (oldState, newState) => {
-                    console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
-                });
-    
-                connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
-                    try {
-                        await Promise.race([
-                            entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-                            entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-                        ]);
-                        // Seems to be reconnecting to a new channel - ignore disconnect
-                    } catch (error) {
-                        // Seems to be a real disconnect which SHOULDN'T be recovered from - destroy connection
-                        connection.destroy();
-                    }
-                });
-            } 
-
-            return connection;
-        }
 	},
+    generateConnection(channel, guildID) {
+        let connection = getVoiceConnection(guildID);
+        
+        if (!connection && !!channel) {
+            connection = joinVoiceChannel({
+                channelId: channel.id,
+                guildId: channel.guild.id,
+                adapterCreator: channel.guild.voiceAdapterCreator
+            });
+
+            connection.on('stateChange', (oldState, newState) => {
+                console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+            });
+
+            connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+                try {
+                    await Promise.race([
+                        entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+                        entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+                    ]);
+                    // Seems to be reconnecting to a new channel - ignore disconnect
+                } catch (error) {
+                    // Seems to be a real disconnect which SHOULDN'T be recovered from - destroy connection
+                    connection.destroy();
+                }
+            });
+        } 
+
+        return connection;
+    }
 };
