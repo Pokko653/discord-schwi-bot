@@ -22,13 +22,13 @@ module.exports = {
 		
 		const sent = await interaction.reply({ content: '「대기」: 측정 중...', fetchReply: true });
 
-		let pingList = [(sent.createdTimestamp - interaction.createdTimestamp)], prevTime = sent.createdTimestamp;
-		for (let i=0; i<4; i++) {
-			let sentRepeat = await interaction.editReply(`「대기」: 측정 중...\n\`\`\`prolog\n${pingList.map((x, i) => `Trial 0${i+1} | ${x}ms`).join('\n')}\`\`\``);
-			pingList.push(sentRepeat.editedTimestamp - prevTime);
+		let pingList = [(sent.createdTimestamp - interaction.createdTimestamp), NaN, NaN, NaN, NaN], prevTime = sent.createdTimestamp;
+		for (let i=1; i<5; i++) {
+			let sentRepeat = await interaction.editReply(`「대기」: 측정 중...\n\`\`\`prolog\n${pingList.map((x) => isNaN(x)? `---ms`: `${x}ms`).join(' | ')}\`\`\``);
+			pingList[i] = sentRepeat.editedTimestamp - prevTime;
 			prevTime = sentRepeat.editedTimestamp;
 		}
 	
-		await interaction.editReply(`「정보」: 평균 왕복 지연 시간: ${Math.round(pingList.reduce((acc, cur) => acc + cur, 0) / 5)}ms\n\`\`\`prolog\n${pingList.map((x, i) => `Trial 0${i+1} | ${x}ms`).join('\n')}\`\`\``);
+		await interaction.editReply(`「정보」: 평균 왕복 지연 시간: ${Math.round(pingList.reduce((acc, cur) => acc + cur, 0) / 5)}ms\n\`\`\`prolog\n${pingList.map((x) => isNaN(x)? `----ms`: `${x}ms`).join(' | ')}\`\`\``);
 	},
 };
