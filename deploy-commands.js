@@ -1,10 +1,14 @@
 const { REST, Routes } = require('discord.js');
-const { clientId, guildIds, token } = require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
+const dotenv = require('dotenv');
+dotenv.config();
 
+// Load Guilds' IDs
+const guildIds = JSON.parse(process.env.GUILD_IDS)
+
+// Grap all command files
 const commands = [];
-// 모든 커맨드 파일을 가지고 옴
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
@@ -26,17 +30,17 @@ for (const folder of commandFolders) {
 }
 
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(token);
+const rest = new REST().setToken(process.env.TOKEN);
 
-// and deploy your commands!
+// and deploy commands!
 (async () => {
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
 		for (const guildId of guildIds) {
 			const data = await rest.put(
-			  Routes.applicationGuildCommands(clientId, guildId),
-			  { body: commands },
+				Routes.applicationGuildCommands(process.env.CLIENT_ID, guildId),
+				{ body: commands },
 			);
 			console.log(`Successfully reloaded ${data.length} application (/) commands for guild ${guildId}.`);
 		}

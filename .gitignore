@@ -1,7 +1,6 @@
 node_modules
 .env
-config.json
-config_test.json
+config
 bot_setting.json
 test
 test.js

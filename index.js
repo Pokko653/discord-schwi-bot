@@ -2,7 +2,6 @@
 const fs = require('node:fs'); // file system 모듈: /commands 디렉토리를 읽어 커맨드 파일 확인
 const path = require('node:path'); // path utility 모듈: 파일과 디렉토리에 접근할 수 있는 경로 구축 도움
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
-const { token } = require('./config.json');
 
 // 새로운 클라이언트 인스턴스 생성
 const client = new Client({ intents: [
@@ -46,4 +45,4 @@ for (const file of eventFiles) {
 }
 
 // 클라이언트 토큰으로 디스코드 로그인
-client.login(token);
+client.login(process.env.TOKEN);
