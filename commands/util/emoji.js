@@ -1,6 +1,6 @@
 const { EmbedBuilder, SlashCommandBuilder, ChatInputCommandInteraction, AttachmentBuilder } = require('discord.js');
 const Canvas = require('@napi-rs/canvas');
-const Settings = require('../../bot_setting.json');
+const config = require('../../config/config.json');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -99,8 +99,8 @@ module.exports = {
                 await interaction.reply({ content: '「에러」: 이모지가 아님.', ephemeral: true });
             }
         } else if (subcommand === 'enlarge') {
-            const bool = interaction.options.getBoolean('boolean') ?? !Settings[interaction.guildId].EmojiLarge;
-            Settings[interaction.guildId].EmojiLarge = bool;
+            const bool = interaction.options.getBoolean('boolean') ?? !config[interaction.guildId].emojiLarge;
+            config[interaction.guildId].emojiLarge = bool;
 
             await interaction.reply(`「정보」: 이제 이모티콘을 크게 ${bool? '한다.': '하지 않는다.'}`);
         }

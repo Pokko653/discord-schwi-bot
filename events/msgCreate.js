@@ -1,12 +1,15 @@
 const { Events, EmbedBuilder } = require('discord.js');
-const Settings = require('../bot_setting.json');
+const config = require('../config/config.json')
 
 // 모든 메시지에 반응: MessageCreate
 module.exports = {
 	name: Events.MessageCreate,
 	once: false,
 	async execute (msg) {
-        if (!Settings[msg.guildId].EmojiLarge) return null;
+        // Ignore bot's message
+        if (msg.author.bot) return null;
+
+        if (!config[msg.guildId].emojiLarge) return null;
 
 		const channel = msg.channel;
         const contents = msg.content.trim();
