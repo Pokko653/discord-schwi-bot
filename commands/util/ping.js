@@ -20,7 +20,7 @@ module.exports = {
 		// }
 		// await interaction.reply(locales[interaction.locale] ?? `Pong to ${interaction.user.username}!`);
 		
-		const sent = await interaction.reply({ content: '「대기」: 측정 중...', fetchReply: true });
+		const sent = await interaction.reply({ content: '「대기」: 측정 중...', withResponse: true });
 
 		let pingList = [(sent.createdTimestamp - interaction.createdTimestamp), NaN, NaN, NaN, NaN], prevTime = sent.createdTimestamp;
 		for (let i=1; i<5; i++) {
