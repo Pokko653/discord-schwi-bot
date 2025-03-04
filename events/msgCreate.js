@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require('discord.js');
+const { Events, EmbedBuilder, Message } = require('discord.js');
 const config = require('../config/config.json')
 const chatService = require("../services/chatService")
 
@@ -8,7 +8,7 @@ module.exports = {
 	once: false,
 	async execute (message) {
         // Ignore bot's message
-        if (message.author.bot) return null;
+        if (message.author.bot) return;
 
         const guild = message.guild;
         const channel = message.channel;
@@ -37,8 +37,17 @@ module.exports = {
                 .replace(/<:([a-zA-Z0-9_]+):([0-9]+)>/g, "")
                 .replace(/<a:([a-zA-Z0-9_]+):([0-9]+)>/g, "")
                 .replace(/<@[0-9]+>/g, "");
+            const contentsWithNickname = `${message.member.displayName}: ${trimmedContents}`
 
-            await channel.send(await chatService.chat(`${message.member.displayName}: ${trimmedContents}`));
+            if (message.attachments.size > 0) {
+                const attachment = message.attachments.values().next().value
+                if (attachment.contentType.startsWith("image")) {
+                    await channel.send(await chatService.chat(contentsWithNickname, attachment))
+                    return;
+                }
+            } 
+
+            await channel.send(await chatService.chat(contentsWithNickname));
         }
 	},
 };
