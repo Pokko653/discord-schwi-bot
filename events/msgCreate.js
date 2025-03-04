@@ -42,12 +42,12 @@ module.exports = {
             if (message.attachments.size > 0) {
                 const attachment = message.attachments.values().next().value
                 if (attachment.contentType.startsWith("image")) {
-                    await channel.send(await chatService.chat(contentsWithNickname, attachment))
+                    await channel.send(await chatService.chat(guild.id, contentsWithNickname, attachment))
                     return;
                 }
             } 
 
-            await channel.send(await chatService.chat(contentsWithNickname));
+            await channel.send(await chatService.chat(guild.id, contentsWithNickname));
         }
 	},
 };
