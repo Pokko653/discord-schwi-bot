@@ -1,16 +1,10 @@
-const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, } = require("@google/generative-ai");
-
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
-
+const { GoogleGenAI } = require("@google/genai");
 const chatHistoryService = require("./chatHistoryService");
 
-const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash",
-    systemInstruction: process.env.LLM_INST,
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
 const generationConfig = {
+    systemInstruction: process.env.LLM_INST,
     temperature: 0.75,
     topP: 0.95,
     topK: 40,
@@ -19,8 +13,9 @@ const generationConfig = {
 };
   
 async function chat(guildId, message, attachment = null) {
-    const chatSession = model.startChat({
-        generationConfig,
+    const chat = ai.chats.create({
+        model: "gemini-2.0-flash",
+        config: generationConfig,
         history: chatHistoryService.getHistory(guildId)
     });
 
@@ -30,20 +25,20 @@ async function chat(guildId, message, attachment = null) {
                 data: Buffer.from(await fetch(attachment.url).then((response) => response.arrayBuffer())).toString("base64"),
                 mimeType: attachment.contentType,
             }
-        },
-        { 
-            text: message 
-        },
+        }, 
+        {
+            text: message
+        }
     ]: [{ text: message }];
 
     // Get result
-    const result =  await chatSession.sendMessage(messageParts);
+    const response = await chat.sendMessage({ message: messageParts });
 
     // Add history
     chatHistoryService.addHistory(guildId, "user", messageParts);
-    chatHistoryService.addHistory(guildId, "model", [{ text: result.response.text() }])
+    chatHistoryService.addHistory(guildId, "model", [{ text: response.text }]);
 
-    return result.response.text();
+    return response.text;
 }
 
 module.exports = { chat };

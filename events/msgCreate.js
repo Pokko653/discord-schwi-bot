@@ -1,6 +1,6 @@
 const { Events, EmbedBuilder, Message } = require('discord.js');
-const config = require('../config/config.json')
-const chatService = require("../services/chatService")
+const config = require('../config/config.json');
+const chatService = require("../services/chatService");
 
 // 모든 메시지에 반응: MessageCreate
 module.exports = {
