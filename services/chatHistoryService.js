@@ -8,7 +8,7 @@ class ChatHistoryService {
      * @description Add chat history to guild's chat histories
      * @param {String} guildId Guild to add history
      * @param {String} role Who sends this chat
-     * @param {Parts[]} content Chat contents
+     * @param {Part[]} content Chat contents
      */
     addHistory(guildId, role, content) {
         if (!this.chatHistories.has(guildId)) this.chatHistories.set(guildId, new Array());
