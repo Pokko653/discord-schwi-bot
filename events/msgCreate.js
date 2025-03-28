@@ -1,6 +1,6 @@
 const { Events, EmbedBuilder, Message } = require('discord.js');
 const config = require('../config/config.json');
-const chatService = require("../services/chatService");
+const chatService = require("../services/chat/chatService");
 
 // 모든 메시지에 반응: MessageCreate
 module.exports = {
@@ -37,12 +37,12 @@ module.exports = {
                 .replace(/<:([a-zA-Z0-9_]+):([0-9]+)>/g, "")
                 .replace(/<a:([a-zA-Z0-9_]+):([0-9]+)>/g, "")
                 .replace(/<@[0-9]+>/g, "");
-            const contentsWithNickname = `${message.member.displayName}: ${trimmedContents}`
+            const contentsWithNickname = `${message.member.displayName}: ${trimmedContents}`;
 
             if (message.attachments.size > 0) {
-                const attachment = message.attachments.values().next().value
+                const attachment = message.attachments.values().next().value;
                 if (attachment.contentType.startsWith("image")) {
-                    await channel.send(await chatService.chat(guild.id, contentsWithNickname, attachment))
+                    await channel.send(await chatService.chat(guild.id, contentsWithNickname, attachment));
                     return;
                 }
             } 
