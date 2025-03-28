@@ -87,6 +87,10 @@ async function chat(guildId, message, attachment = null) {
 
             const finalResponse = await chatWithGoogleSearch.sendMessage({ message: messageParts });
 
+            // Add history
+            chatHistoryService.addHistory(guildId, "user", messageParts);
+            chatHistoryService.addHistory(guildId, "model", [{ text: finalResponse.text }]);
+
             return finalResponse.text;
         } else {
             const functionCalls = response.functionCalls;
