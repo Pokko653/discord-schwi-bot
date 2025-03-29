@@ -31,6 +31,15 @@ class ChatHistoryService {
     }
 
     /**
+     * @description Remove recent history of one pair of chat. If no history is in that guild, do nothing
+     * @param {String} guildId Guild to remove history
+     */
+    removeHistoryPair(guildId) {
+        const histories = this.chatHistories.get(guildId) ?? [];
+        histories.pop(); histories.pop();
+    }
+
+    /**
      * @description Clear chat history of a guild
      * @param {String} guildId Guild to clear history
      */

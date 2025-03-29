@@ -37,12 +37,24 @@ const generationConfig = {
     }]
 };
 
+const generationConfigWithGoogleSearch = {
+    systemInstruction: process.env.LLM_INST,
+    temperature: 0.75,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+    responseMimeType: "text/plain",
+    tools: [{
+        googleSearch: {},
+    }]
+};
+
 const tools = {
     // to-do
 };
-  
+
 async function chat(guildId, message, attachment = null) {
-    const chat = ai.chats.create({
+    const chatSession = ai.chats.create({
         model: "gemini-2.0-flash",
         config: generationConfig,
         history: chatHistoryService.getHistory(guildId)
@@ -61,31 +73,22 @@ async function chat(guildId, message, attachment = null) {
     ]: [{ text: message }];
 
     // Get result
-    const response = await chat.sendMessage({ message: messageParts });
+    const response = await chatSession.sendMessage({ message: messageParts });
 
     if (response.functionCalls && response.functionCalls.length > 0) {
         if (response.functionCalls.some((call) => call.name === "searchGoogle")) {
             // Google Search is needed: Use another chatbot instance that can search google
 
-            const generationConfigWithGoogleSearch = {
-                systemInstruction: process.env.LLM_INST,
-                temperature: 0.75,
-                topP: 0.95,
-                topK: 40,
-                maxOutputTokens: 8192,
-                responseMimeType: "text/plain",
-                tools: [{
-                    googleSearch: {},
-                }]
-            };
+            // To pop function call part, delete recent chat pair
+            chatHistoryService.removeHistoryPair(guildId); 
 
-            const chatWithGoogleSearch = ai.chats.create({
+            const chatSessionWithGoogleSearch = ai.chats.create({
                 model: "gemini-2.0-flash",
                 config: generationConfigWithGoogleSearch,
                 history: chatHistoryService.getHistory(guildId)
             });
 
-            const finalResponse = await chatWithGoogleSearch.sendMessage({ message: messageParts });
+            const finalResponse = await chatSessionWithGoogleSearch.sendMessage({ message: messageParts });
 
             // Add history
             chatHistoryService.addHistory(guildId, "user", messageParts);
@@ -100,15 +103,13 @@ async function chat(guildId, message, attachment = null) {
             chatHistoryService.addHistory(guildId, "user", messageParts);
             chatHistoryService.addHistory(guildId, "model", [{ text: response.text }].concat(functionCalls.map(call => ({ functionCall: call }))));
 
-            const chatWithFunctionCall = ai.chats.create({
+            const chatSessionWithFunctionCall = ai.chats.create({
                 model: "gemini-2.0-flash",
                 config: generationConfig,
                 history: chatHistoryService.getHistory(guildId)
             });
 
-            console.log("function result: "+JSON.stringify(functionResults));
-
-            const finalResponse = await chatWithFunctionCall.sendMessage({ message: functionResults });
+            const finalResponse = await chatSessionWithFunctionCall.sendMessage({ message: functionResults });
 
             // Add history
             chatHistoryService.addHistory(guildId, "user", functionResults);
