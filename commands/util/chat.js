@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChatInputCommandInteraction, ChannelType } = require('discord.js');
-const config = require('../../config/config.json');
+const { getConfig, setConfig } = require('../../services/configAccessService.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -31,7 +31,7 @@ module.exports = {
 
         if (subcommand === 'channel') {
             const channel = interaction.options.getChannel('channel') ?? interaction.channel;
-            config[guildId].chatChannelId = channel.id;
+            setConfig(guildId, process.env.CHAT_CHANNEL_ID, channel.id);
 
             await interaction.reply(`「성공」: 이제 ${channel.name} 채널을 기본 채팅 채널로 사용한다.`)
         }
