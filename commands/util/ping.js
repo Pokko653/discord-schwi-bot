@@ -22,8 +22,8 @@ module.exports = {
 		
 		const sent = await interaction.reply({ content: '「대기」: 측정 중...', withResponse: true });
 
-		let pingList = [(sent.createdTimestamp - interaction.createdTimestamp), NaN, NaN, NaN, NaN], prevTime = sent.createdTimestamp;
-		for (let i=1; i<5; i++) {
+		let pingList = [NaN, NaN, NaN, NaN, NaN], prevTime = sent.interaction.createdTimestamp;
+		for (let i=0; i<5; i++) {
 			let sentRepeat = await interaction.editReply(`「대기」: 측정 중...\n\`\`\`prolog\n${pingList.map((x) => isNaN(x)? `---ms`: `${x}ms`).join(' | ')}\`\`\``);
 			pingList[i] = sentRepeat.editedTimestamp - prevTime;
 			prevTime = sentRepeat.editedTimestamp;
